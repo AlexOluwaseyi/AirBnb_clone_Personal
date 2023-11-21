@@ -42,18 +42,61 @@ class HBNBCommand(cmd.Cmd):
         """Default behavior for empty lines and unknown commands."""
         pass
 
-    def do_create(self, className=None):
+    def do_create(self, args):
         """Creates a new instance of BaseModel"""
-        if not className:
+        if not args:
             print("** class name missing **")
             return
         else:
-            try:
-                my_model = globals()[className]()
+            arg = args.split(" ")
+            if len(arg) == 1:
+                className = arg[0]
+                try:
+                    my_model = globals()[className]()
+                    my_model.save()
+                    print("{}".format(my_model.id))
+                except KeyError:
+                    print("** class doesn't exist **")
+            elif len(arg) >= 2:
+                className = arg[0]
+                # Get the parameters from the command line
+                param_list = arg[1:]
+
+                # Parse and process the parameters
+                param_dict = {}
+                for param in param_list:
+                    # Split the parameter into key and value
+                    key_value = param.split('=')
+
+                    # Check if the parameter has the correct format
+                    if len(key_value) != 2:
+                        continue
+
+                    key, value = key_value
+
+                    # Handle special cases for String
+                    if value[1] == '"' and value[-1] == '"':
+                        value = value[1:-1].replace('_', ' ')
+
+                    # Handle special cases for float
+                    elif '.' in value:
+                        try:
+                            value = float(value)
+                        except ValueError:
+                            continue
+                    else:
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            continue
+                # Add the key-value pair to the parameter dictionary
+                param_dict[key] = value
+
+                # Create an instance of the specified class
+                # with the parsed parameters
+                my_model = globals()[className](**param_dict)
                 my_model.save()
                 print("{}".format(my_model.id))
-            except KeyError:
-                print("** class doesn't exist **")
 
     def do_show(self, arg):
         """
