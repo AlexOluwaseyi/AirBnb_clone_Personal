@@ -3,7 +3,7 @@
 """
 Console program that contains the entry point of the
 command interpreter.
-Uses the cmd module and a custom prompt '(HBNB) '
+Uses the cmd module and a custom prompt '(hbnb) '
 """
 
 
@@ -25,10 +25,15 @@ class HBNBCommand(cmd.Cmd):
     Inherits from cmd.Cmd
     """
     prompt = "(hbnb) "
-    classList = [
-            'BaseModel', 'User', 'State', 'City',
-            'Amenity', 'Place', 'Review'
-            ]
+    class_dict = {
+        'BaseModel': BaseModel,
+        'User': User,
+        'State': State,
+        'City': City,
+        'Amenity': Amenity,
+        'Place': Place,
+        'Review': Review
+    }
 
     def do_quit(self, line):
         """Command to quit the program"""
@@ -47,56 +52,36 @@ class HBNBCommand(cmd.Cmd):
         if not args:
             print("** class name missing **")
             return
-        else:
-            arg = args.split(" ")
-            if len(arg) == 1:
-                className = arg[0]
-                try:
-                    my_model = globals()[className]()
-                    my_model.save()
-                    print("{}".format(my_model.id))
-                except KeyError:
-                    print("** class doesn't exist **")
-            elif len(arg) >= 2:
-                className = arg[0]
-                # Get the parameters from the command line
-                param_list = arg[1:]
 
-                # Parse and process the parameters
-                param_dict = {}
-                for param in param_list:
-                    # Split the parameter into key and value
-                    key_value = param.split('=')
+        arg = args.split(" ")
+        className = arg[0]
 
-                    # Check if the parameter has the correct format
-                    if len(key_value) != 2:
-                        continue
+        if className not in self.class_dict:
+            print("** class doesn't exist **")
+            return
 
-                    key, value = key_value
+        param_dict = {}
+        for param in arg[1:]:
+            try:
+                key, value = param.split("=")
+                value = value.replace("_", " ")\
+                    .replace('\"', '').replace("\\", '')
+                if value[0] == '"' and value[-1] == '"':
+                    value = value[1:-1]
+                elif '.' in value:
+                    value = float(value)
+                elif value.isdigit():
+                    value = int(value)
 
-                    # Handle special cases for String
-                    if value[1] == '"' and value[-1] == '"':
-                        value = value[1:-1].replace('_', ' ')
-
-                    # Handle special cases for float
-                    elif '.' in value:
-                        try:
-                            value = float(value)
-                        except ValueError:
-                            continue
-                    else:
-                        try:
-                            value = int(value)
-                        except ValueError:
-                            continue
-                # Add the key-value pair to the parameter dictionary
                 param_dict[key] = value
+            except ValueError:
+                pass
 
-                # Create an instance of the specified class
-                # with the parsed parameters
-                my_model = globals()[className](**param_dict)
-                my_model.save()
-                print("{}".format(my_model.id))
+        # Create an instance of the specified class
+        # with the parsed parameters
+        my_model = HBNBCommand.class_dict[className](**param_dict)
+        my_model.save()
+        print(my_model.id)
 
     def do_show(self, arg):
         """
@@ -121,7 +106,7 @@ class HBNBCommand(cmd.Cmd):
                                 print(instances)
                             else:
                                 print("** no instance found **")
-                        elif (className in self.classList):
+                        elif (className in self.class_dict.keys()):
                             print("** no instance found **")
                         else:
                             print("** class doesn't exist **")
