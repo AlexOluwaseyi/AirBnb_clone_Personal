@@ -42,6 +42,7 @@ class BaseModel:
 
             if 'updated_at' not in kwargs:
                 self.updated_at = datetime.now()
+            storage.new(self)
 
         else:
             self.id = str(uuid.uuid4())
